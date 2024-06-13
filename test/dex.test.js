@@ -32,6 +32,14 @@ contract("Dex", accounts => {
 
         expect(reserve1.toString()).to.equal(web3.utils.toWei('100', 'ether'));
         expect(reserve2.toString()).to.equal(web3.utils.toWei('100', 'ether'));
+
+        console.log("Add Liquidity Details:");
+        
+        console.log("Reserve 1:", web3.utils.fromWei(reserve1.toString(), 'ether'), "MyToken");
+        console.log("Reserve 2:", web3.utils.fromWei(reserve2.toString(), 'ether'), "StableCoin");
+        console.log("Price:", (reserve1 / reserve2).toString());
+
+
     });
 
     it("should swap tokens", async () => {
@@ -70,8 +78,9 @@ contract("Dex", accounts => {
         console.log("Initial Reserve 2:", web3.utils.fromWei(initialReserve2.toString(), 'ether'), "StableCoin");
         console.log("Reserve 1:", web3.utils.fromWei(reserve1.toString(), 'ether'));
         console.log("Reserve 2:", web3.utils.fromWei(reserve2.toString(), 'ether'));
+        console.log("Price:", (reserve1 / reserve2).toString());
 
-        
+
 
     });
 });
