@@ -53,7 +53,7 @@ contract Dex is Ownable(msg.sender) {
 
         input.transferFrom(msg.sender, address(this), inputAmount);
 
-        uint256 inputAmountWithFee = inputAmount * 997; // Apply 0.3% fee
+        uint256 inputAmountWithFee = inputAmount * 999; // Apply 0.1% fee
         uint256 outputAmount = (inputAmountWithFee * outputReserve) / (inputReserve * 1000 + inputAmountWithFee);
 
         require(outputAmount <= output.balanceOf(address(this)), "Insufficient liquidity for this trade");
