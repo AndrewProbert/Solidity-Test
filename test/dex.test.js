@@ -22,6 +22,9 @@ contract("Dex", accounts => {
     });
 
     it("should add liquidity", async () => {
+        const initialReserve1 = await dex.reserve1();
+        const initialReserve2 = await dex.reserve2();
+        
         await myToken.approve(dex.address, web3.utils.toWei('100', 'ether'), { from: accounts[0] });
         await stableCoin.approve(dex.address, web3.utils.toWei('100', 'ether'), { from: accounts[0] });
 
@@ -34,7 +37,8 @@ contract("Dex", accounts => {
         expect(reserve2.toString()).to.equal(web3.utils.toWei('100', 'ether'));
 
         console.log("Add Liquidity Details:");
-        
+        console.log("Initial Reserve 1:", web3.utils.fromWei(initialReserve1.toString(), 'ether'), "MyToken");
+        console.log("Initial Reserve 2:", web3.utils.fromWei(initialReserve2.toString(), 'ether'), "StableCoin");
         console.log("Reserve 1:", web3.utils.fromWei(reserve1.toString(), 'ether'), "MyToken");
         console.log("Reserve 2:", web3.utils.fromWei(reserve2.toString(), 'ether'), "StableCoin");
         console.log("Price:", (reserve1 / reserve2).toString());
@@ -83,4 +87,5 @@ contract("Dex", accounts => {
 
 
     });
+    
 });
