@@ -1,0 +1,2 @@
+https://www.quicknode.com/guides/ethereum-development/smart-contracts/how-to-create-and-deploy-an-erc20-token
+use this site for tomorrow, for the ERC20 token creation, then we need to make sure that the USDC token can be any token.
