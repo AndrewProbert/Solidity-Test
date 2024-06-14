@@ -61,6 +61,12 @@ contract("Dex", accounts => {
 
         expect(Number(reserve1.toString())).to.equal(Number(web3.utils.toWei('110', 'ether')));
         expect(Number(reserve2.toString())).to.be.below(Number(web3.utils.toWei('100', 'ether')));
+
+        const sendWallet = accounts[0];
+        const receiveWallet = dex.address;
+
+        console.log("Send Wallet:", sendWallet);
+        console.log("Receive Wallet:", receiveWallet);
     });
 
     it("should get spot price", async () => {
