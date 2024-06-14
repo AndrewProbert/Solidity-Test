@@ -78,22 +78,31 @@ contract("Dex", accounts => {
     it("should remove liquidity", async () => {
         const initialReserve1 = await dex.reserve1();
         const initialReserve2 = await dex.reserve2();
+        const initialLiquidity = await dex.totalLiquidity();
 
-        console.log("Removing liquidity...");
-        await dex.removeLiquidity(web3.utils.toWei('50', 'ether'), web3.utils.toWei('50', 'ether'), { from: accounts[0] });
+        console.log("Initial Reserves:", initialReserve1.toString(), initialReserve2.toString());
+        console.log("Initial Liquidity:", initialLiquidity.toString());
+
+        const liquidityToRemove = web3.utils.toWei('50', 'ether');
+
+        await dex.removeLiquidity(liquidityToRemove, { from: accounts[0] });
 
         const reserve1 = await dex.reserve1();
         const reserve2 = await dex.reserve2();
         const spotPriceToken1Before = await dex.getSpotPrice(myToken.address);
         const spotPriceToken2Before = await dex.getSpotPrice(stableCoin.address);
 
-        console.log("Reserve 1:", reserve1.toString());
-        console.log("Reserve 2:", reserve2.toString());
+        console.log("Reserves after removing liquidity:", reserve1.toString(), reserve2.toString());
         console.log("Spot Price Token 1 (Before):", web3.utils.fromWei(spotPriceToken1Before.toString(), 'ether'));
         console.log("Spot Price Token 2 (Before):", web3.utils.fromWei(spotPriceToken2Before.toString(), 'ether'));
 
-        expect(reserve1.toString()).to.equal(initialReserve1.sub(new web3.utils.BN(web3.utils.toWei('50', 'ether'))).toString());
-        expect(reserve2.toString()).to.equal(initialReserve2.sub(new web3.utils.BN(web3.utils.toWei('50', 'ether'))).toString());
+        const expectedReserve1 = initialReserve1.sub(new web3.utils.BN(liquidityToRemove).mul(initialReserve1).div(initialLiquidity));
+        const expectedReserve2 = initialReserve2.sub(new web3.utils.BN(liquidityToRemove).mul(initialReserve2).div(initialLiquidity));
+
+        console.log("Expected Reserves:", expectedReserve1.toString(), expectedReserve2.toString());
+
+        expect(reserve1.toString()).to.equal(expectedReserve1.toString());
+        expect(reserve2.toString()).to.equal(expectedReserve2.toString());
     });
 
 

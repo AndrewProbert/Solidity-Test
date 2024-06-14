@@ -11,8 +11,11 @@ contract Dex is Ownable(msg.sender) {
     uint256 public reserve1;
     uint256 public reserve2;
 
-    event LiquidityAdded(address indexed provider, uint256 amount1, uint256 amount2);
-    event LiquidityRemoved(address indexed provider, uint256 amount1, uint256 amount2);
+    uint256 public totalLiquidity;
+    mapping(address => uint256) public liquidity;
+
+    event LiquidityAdded(address indexed provider, uint256 amount1, uint256 amount2, uint256 liquidityMinted);
+    event LiquidityRemoved(address indexed provider, uint256 amount1, uint256 amount2, uint256 liquidityBurned);
     event Swapped(address indexed swapper, address inputToken, uint256 inputAmount, address outputToken, uint256 outputAmount);
 
     constructor(address _token1, address _token2) {
@@ -20,30 +23,48 @@ contract Dex is Ownable(msg.sender) {
         token2 = IERC20(_token2);
     }
 
-    function addLiquidity(uint256 amount1, uint256 amount2) external onlyOwner {
-        token1.transferFrom(msg.sender, address(this), amount1);
-        token2.transferFrom(msg.sender, address(this), amount2);
+    function addLiquidity(uint256 amount1, uint256 amount2) external returns (uint256 liquidityMinted) {
+        require(amount1 > 0 && amount2 > 0, "Amount must be greater than 0");
+
+        if (totalLiquidity == 0) {
+            liquidityMinted = sqrt(amount1 * amount2);
+        } else {
+            liquidityMinted = (amount1 * totalLiquidity) / reserve1;
+        }
+
+        liquidity[msg.sender] += liquidityMinted;
+        totalLiquidity += liquidityMinted;
 
         reserve1 += amount1;
         reserve2 += amount2;
 
-        emit LiquidityAdded(msg.sender, amount1, amount2);
+        require(token1.transferFrom(msg.sender, address(this), amount1), "Token1 transfer failed");
+        require(token2.transferFrom(msg.sender, address(this), amount2), "Token2 transfer failed");
+
+        emit LiquidityAdded(msg.sender, amount1, amount2, liquidityMinted);
+        return liquidityMinted;
     }
 
-    function removeLiquidity(uint256 amount1, uint256 amount2) external onlyOwner {
-        require(reserve1 >= amount1, "Insufficient reserve1");
-        require(reserve2 >= amount2, "Insufficient reserve2");
+    function removeLiquidity(uint256 liquidityAmount) external returns (uint256 amount1, uint256 amount2) {
+        require(liquidityAmount > 0, "Liquidity must be greater than 0");
+        require(liquidity[msg.sender] >= liquidityAmount, "Insufficient liquidity");
 
-        token1.transfer(msg.sender, amount1);
-        token2.transfer(msg.sender, amount2);
+        amount1 = (liquidityAmount * reserve1) / totalLiquidity;
+        amount2 = (liquidityAmount * reserve2) / totalLiquidity;
+
+        liquidity[msg.sender] -= liquidityAmount;
+        totalLiquidity -= liquidityAmount;
 
         reserve1 -= amount1;
         reserve2 -= amount2;
 
-        emit LiquidityRemoved(msg.sender, amount1, amount2);
+        require(token1.transfer(msg.sender, amount1), "Token1 transfer failed");
+        require(token2.transfer(msg.sender, amount2), "Token2 transfer failed");
+
+        emit LiquidityRemoved(msg.sender, amount1, amount2, liquidityAmount);
     }
 
-    function swap(address inputToken, uint256 inputAmount) external {
+    function swap(address inputToken, uint256 inputAmount) external returns (uint256 outputAmount) {
         require(inputToken == address(token1) || inputToken == address(token2), "Invalid token");
 
         bool isToken1 = inputToken == address(token1);
@@ -51,14 +72,13 @@ contract Dex is Ownable(msg.sender) {
             ? (token1, token2, reserve1, reserve2) 
             : (token2, token1, reserve2, reserve1);
 
-        input.transferFrom(msg.sender, address(this), inputAmount);
-
-        uint256 inputAmountWithFee = inputAmount * 999; // Apply 0.1% fee
-        uint256 outputAmount = (inputAmountWithFee * outputReserve) / (inputReserve * 1000 + inputAmountWithFee);
+        uint256 inputAmountWithFee = inputAmount * 997 / 1000; // Apply 0.3% fee
+        outputAmount = (inputAmountWithFee * outputReserve) / (inputReserve * 1000 + inputAmountWithFee);
 
         require(outputAmount <= output.balanceOf(address(this)), "Insufficient liquidity for this trade");
 
-        output.transfer(msg.sender, outputAmount);
+        require(input.transferFrom(msg.sender, address(this), inputAmount), "Input token transfer failed");
+        require(output.transfer(msg.sender, outputAmount), "Output token transfer failed");
 
         if (isToken1) {
             reserve1 += inputAmount;
@@ -83,5 +103,18 @@ contract Dex is Ownable(msg.sender) {
 
     function getReserves() external view returns (uint256, uint256) {
         return (reserve1, reserve2);
+    }
+
+    function sqrt(uint y) internal pure returns (uint z) {
+        if (y > 3) {
+            z = y;
+            uint x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
     }
 }
