@@ -111,5 +111,44 @@ contract("Dex", accounts => {
         expect(reserve2.toString()).to.equal(expectedReserve2.toString());
     });
 
+    //add more swap tests
+
+    it("should swap tokens", async () => {
+        const amountIn = web3.utils.toWei('10', 'ether');
+        await stableCoin.approve(dex.address, amountIn, { from: accounts[0] });
+
+        console.log("Swapping tokens...");
+        await dex.swap(stableCoin.address, amountIn, { from: accounts[0] });
+
+        const reserve1 = await dex.reserve1();
+        const reserve2 = await dex.reserve2();
+        const spotPriceToken1After = await dex.getSpotPrice(myToken.address);
+        const spotPriceToken2After = await dex.getSpotPrice(stableCoin.address);
+
+        console.log("Reserve 1:", reserve1.toString());
+        console.log("Reserve 2:", reserve2.toString());
+        console.log("Spot Price Token 1 (After):", web3.utils.fromWei(spotPriceToken1After.toString(), 'ether'));
+        console.log("Spot Price Token 2 (After):", web3.utils.fromWei(spotPriceToken2After.toString(), 'ether'));
+
+
+
+        const sendWallet = accounts[0];
+        const receiveWallet = dex.address;
+
+        console.log("Send Wallet:", sendWallet);
+        console.log("Receive Wallet:", receiveWallet);
+    });
+
+    it("should get spot price", async () => {
+        const spotPriceToken1 = await dex.getSpotPrice(myToken.address);
+        const spotPriceToken2 = await dex.getSpotPrice(stableCoin.address);
+
+        console.log("Spot Price Token 1:", web3.utils.fromWei(spotPriceToken1.toString(), 'ether'));
+        console.log("Spot Price Token 2:", web3.utils.fromWei(spotPriceToken2.toString(), 'ether'));
+
+        expect(Number(spotPriceToken1)).to.be.above(0);
+        expect(Number(spotPriceToken2)).to.be.above(0);
+    });
+
 
 });
