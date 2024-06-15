@@ -148,6 +148,24 @@ contract("Dex", accounts => {
 
         expect(Number(spotPriceToken1)).to.be.above(0);
         expect(Number(spotPriceToken2)).to.be.above(0);
+
+
+
+
+    });
+
+    it("should get contract addresses", async () => {
+        const myTokenAddress = myToken.address;
+        const stableCoinAddress = stableCoin.address;
+        const dexAddress = dex.address;
+
+        console.log("MyToken Address:", myTokenAddress);
+        console.log("StableCoin Address:", stableCoinAddress);
+        console.log("Dex Address:", dexAddress);
+
+        expect(myTokenAddress).to.not.be.undefined;
+        expect(stableCoinAddress).to.not.be.undefined;
+        expect(dexAddress).to.not.be.undefined;
     });
 
 
