@@ -66,20 +66,20 @@ contract Dex is Ownable(msg.sender) {
 
     function swap(address inputToken, uint256 inputAmount) external returns (uint256 outputAmount) {
         require(inputToken == address(token1) || inputToken == address(token2), "Invalid token");
-
+    
         bool isToken1 = inputToken == address(token1);
         (IERC20 input, IERC20 output, uint256 inputReserve, uint256 outputReserve) = isToken1 
             ? (token1, token2, reserve1, reserve2) 
             : (token2, token1, reserve2, reserve1);
-
+    
         uint256 inputAmountWithFee = inputAmount * 997 / 1000; // Apply 0.3% fee
         outputAmount = (inputAmountWithFee * outputReserve) / (inputReserve * 1000 + inputAmountWithFee);
-
+    
         require(outputAmount <= output.balanceOf(address(this)), "Insufficient liquidity for this trade");
-
+    
         require(input.transferFrom(msg.sender, address(this), inputAmount), "Input token transfer failed");
         require(output.transfer(msg.sender, outputAmount), "Output token transfer failed");
-
+    
         if (isToken1) {
             reserve1 += inputAmount;
             reserve2 -= outputAmount;
@@ -87,7 +87,7 @@ contract Dex is Ownable(msg.sender) {
             reserve2 += inputAmount;
             reserve1 -= outputAmount;
         }
-
+    
         emit Swapped(msg.sender, inputToken, inputAmount, address(output), outputAmount);
     }
 
