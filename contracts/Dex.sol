@@ -71,6 +71,8 @@ contract Dex is Ownable(msg.sender) {
         (IERC20 input, IERC20 output, uint256 inputReserve, uint256 outputReserve) = isToken1 
             ? (token1, token2, reserve1, reserve2) 
             : (token2, token1, reserve2, reserve1);
+
+        require(inputReserve >= inputAmount, "Insufficient reserve for this trade");
     
         uint256 inputAmountWithFee = inputAmount * 997 / 1000; // Apply 0.3% fee
         outputAmount = (inputAmountWithFee * outputReserve) / (inputReserve * 1000 + inputAmountWithFee);
