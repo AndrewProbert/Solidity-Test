@@ -26,9 +26,24 @@ contract Dex is Ownable(msg.sender) {
     function addLiquidity(uint256 amount1, uint256 amount2) external returns (uint256 liquidityMinted) {
         require(amount1 > 0 && amount2 > 0, "Amount must be greater than 0");
 
+        // Check balances
+        uint256 balance1 = token1.balanceOf(msg.sender);
+        uint256 balance2 = token2.balanceOf(msg.sender);
+        require(balance1 >= amount1, "Insufficient token1 balance");
+        require(balance2 >= amount2, "Insufficient token2 balance");
+
+        // Check allowances
+        uint256 allowance1 = token1.allowance(msg.sender, address(this));
+        uint256 allowance2 = token2.allowance(msg.sender, address(this));
+        require(allowance1 >= amount1, "Insufficient token1 allowance");
+        require(allowance2 >= amount2, "Insufficient token2 allowance");
+
         if (totalLiquidity == 0) {
             liquidityMinted = sqrt(amount1 * amount2);
         } else {
+            uint256 amount2Optimal = (amount1 * reserve2) / reserve1;
+            require(amount2 >= amount2Optimal, "Insufficient amount2 provided");
+
             liquidityMinted = (amount1 * totalLiquidity) / reserve1;
         }
 
@@ -66,22 +81,23 @@ contract Dex is Ownable(msg.sender) {
 
     function swap(address inputToken, uint256 inputAmount) external returns (uint256 outputAmount) {
         require(inputToken == address(token1) || inputToken == address(token2), "Invalid token");
-    
+
         bool isToken1 = inputToken == address(token1);
         (IERC20 input, IERC20 output, uint256 inputReserve, uint256 outputReserve) = isToken1 
             ? (token1, token2, reserve1, reserve2) 
             : (token2, token1, reserve2, reserve1);
 
-        require(inputReserve >= inputAmount, "Insufficient reserve for this trade");
-    
+        require(inputAmount > 0, "Input amount must be greater than 0");
+        require(inputReserve > 0 && outputReserve > 0, "Insufficient reserves");
+
         uint256 inputAmountWithFee = inputAmount * 997 / 1000; // Apply 0.3% fee
-        outputAmount = (inputAmountWithFee * outputReserve) / (inputReserve * 1000 + inputAmountWithFee);
-    
+        outputAmount = (inputAmountWithFee * outputReserve) / (inputReserve + inputAmountWithFee);
+
         require(outputAmount <= output.balanceOf(address(this)), "Insufficient liquidity for this trade");
-    
+
         require(input.transferFrom(msg.sender, address(this), inputAmount), "Input token transfer failed");
         require(output.transfer(msg.sender, outputAmount), "Output token transfer failed");
-    
+
         if (isToken1) {
             reserve1 += inputAmount;
             reserve2 -= outputAmount;
@@ -89,7 +105,7 @@ contract Dex is Ownable(msg.sender) {
             reserve2 += inputAmount;
             reserve1 -= outputAmount;
         }
-    
+
         emit Swapped(msg.sender, inputToken, inputAmount, address(output), outputAmount);
     }
 
@@ -119,5 +135,4 @@ contract Dex is Ownable(msg.sender) {
             z = 1;
         }
     }
-    
 }
