@@ -38,8 +38,14 @@ contract("Dex", accounts => {
         console.log("Spot Price Token 1 (Before):", web3.utils.fromWei(spotPriceToken1Before.toString(), 'ether'));
         console.log("Spot Price Token 2 (Before):", web3.utils.fromWei(spotPriceToken2Before.toString(), 'ether'));
 
+        //print wallet balances
+        const myTokenBalance = await myToken.balanceOf(accounts[0]);
+        const stableCoinBalance = await stableCoin.balanceOf(accounts[0]);
+
+
         expect(reserve1.toString()).to.equal(web3.utils.toWei('100', 'ether'));
         expect(reserve2.toString()).to.equal(web3.utils.toWei('100', 'ether'));
+
     });
 
     it("should swap tokens", async () => {
@@ -137,6 +143,7 @@ contract("Dex", accounts => {
 
         console.log("Send Wallet:", sendWallet);
         console.log("Receive Wallet:", receiveWallet);
+        
     });
 
     it("should get spot price", async () => {
@@ -163,10 +170,20 @@ contract("Dex", accounts => {
         console.log("StableCoin Address:", stableCoinAddress);
         console.log("Dex Address:", dexAddress);
 
+        //print wallet balances
+        const myTokenBalance = await myToken.balanceOf(accounts[0]);
+        const stableCoinBalance = await stableCoin.balanceOf(accounts[0]);
+
+        console.log("MyToken Balance (Account 0):", web3.utils.fromWei(myTokenBalance.toString(), 'ether'));
+        console.log("StableCoin Balance (Account 0):", web3.utils.fromWei(stableCoinBalance.toString(), 'ether'));
+        
+
         expect(myTokenAddress).to.not.be.undefined;
         expect(stableCoinAddress).to.not.be.undefined;
         expect(dexAddress).to.not.be.undefined;
     });
+
+
 
 
 });
